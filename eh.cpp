@@ -1,6 +1,11 @@
 //#include <glad/egl.h>
 //#include <glad/gles2.h>
 
+#include <stdexcept>
+#undef eigen_assert
+#define eigen_assert(x) \
+  if (!(x)) { throw (std::runtime_error("Put your message here")); }
+
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
@@ -92,11 +97,51 @@ class MyMenu : public igl::opengl::glfw::imgui::ImGuiMenu
 public:
 	MyMenu() { }
 };
-
+#define EIEIO1(x, xi) \
+  try{ x; }catch(...) {std::cout << "pushBaryV(vi = " << vi << ", i = " << i << ") " #xi \
+  " [ " #x "] failed." << std::endl; throw; }
+#define EIEIO2(x) \
+  try{ x; }catch(...) {std::cout << "pushBarys(i = " << i << ") failed." << std::endl; throw; }
+IGL_INLINE void pushBary
+( Eigen::MatrixXd & Vi
+, Eigen::MatrixXi & Fi
+, Eigen::MatrixXd & V
+, int vi // vertex index
+, int i // where in V to store the data
+, double b
+) {
+  double f;
+  EIEIO1(f = Vi(vi, 0), 0);
+  EIEIO1(V(i, 0) = f  , 1);
+  EIEIO1(f = Vi(vi, 1), 2);
+  EIEIO1(V(i, 1) = f  , 3);
+  EIEIO1(f = Vi(vi, 2), 4);
+  EIEIO1(V(i, 2) = f  , 5);
+  EIEIO1(V(i, 3) = b  , 6);
+}
+/*
+Call pushBary for each vector indexed by the face at index fi
+*/
+IGL_INLINE void pushBarys
+( Eigen::MatrixXd & Vi
+, Eigen::MatrixXi & Fi
+, Eigen::MatrixXd & V
+, int fi
+) {
+  int i0 = Fi(fi, 0);
+  int i1 = Fi(fi, 1);
+  int i2 = Fi(fi, 2);
+  pushBary(Vi, Fi, V, i0, fi*3+0, 0.0);
+  pushBary(Vi, Fi, V, i1, fi*3+1, 1.0);
+  pushBary(Vi, Fi, V, i2, fi*3+2, 2.0);
+}
 int main(int argc, char *argv[])
 {
   Eigen::MatrixXd V;
   Eigen::MatrixXi F;
+
+  // std::vector<std::vector<double> > V;
+  // std::vector<std::vector<int> > F;
 
   // Load a mesh in OFF format
 #ifdef __EMSCRIPTEN__
@@ -187,8 +232,41 @@ int main(int argc, char *argv[])
     ImGui::End();
   };
 
+//#ifndef __EMSCRIPTEN__
+#if USE_BARYCENTRIC
   // Plot the mesh
+  std::cout << "The matrix F is of size "
+            << F.rows() << "x" << F.cols() << std::endl;
+  std::cout << "The matrix V is of size "
+            << V.rows() << "x" << V.cols() << std::endl;
+  Eigen::MatrixXd Vt;
+  Vt.resize(F.rows()*3, 4);
+  std::cout << "The matrix Vt is of size "
+            << Vt.rows() << "x" << Vt.cols() << std::endl;
+  //function triangulateTriStrip(aVert,aIndex,out)
+  for(Eigen::Index i = 0; i < F.rows(); ++i) {
+    int fl = F.cols();
+    switch(fl) {
+    case 3: // Triangle
+      try{
+        EIEIO2(pushBarys(V, F, Vt, i));
+      }catch(...) {
+        throw;
+      }
+      break;
+    case 4: //{ // Quad
+      //break; }
+    default:
+      std::cerr << "Unexpected Face entry of length " << fl << "\"." << std::endl;
+      return 1;
+    }
+    //console.log(aIndex[i],aIndex[i+1],aIndex[i+3],aIndex[i+2]);
+  }
+  F.resize(0, 3);
+  viewer.data().set_mesh(Vt, F);
+#else
   viewer.data().set_mesh(V, F);
   viewer.data().add_label(viewer.data().V.row(0) + viewer.data().V_normals.row(0).normalized()*0.005, "Hello World!");
+#endif
   viewer.launch();
 }

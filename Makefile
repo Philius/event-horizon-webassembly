@@ -13,6 +13,7 @@
 #
 # All three are needed to run the demo.
 
+USE_BARYCENTRIC = 0
 USE_EMSCRIPTEN = 1
 ifeq ($(USE_EMSCRIPTEN), 1)
 CC = emcc
@@ -48,7 +49,7 @@ UNAME_S := $(shell uname -s)
 
 EMS += -s USE_SDL=2 -s WASM=1
 EMS += -s ALLOW_MEMORY_GROWTH=1
-EMS += -s DISABLE_EXCEPTION_CATCHING=1 -s NO_EXIT_RUNTIME=0
+EMS += -s DISABLE_EXCEPTION_CATCHING=2 -s NO_EXIT_RUNTIME=0
 EMS += -s ASSERTIONS=1
 EMS += -s USE_GLFW=3 -s USE_WEBGL2=1
 
@@ -80,6 +81,7 @@ CPPFLAGS += -I$(LIBIGL-DIR)/include \
 -D FULL_ES3=1 -D MIN_WEBGL_VERSION=2 -D MAX_WEBGL_VERSION=2 \
 -D GLFW_INCLUDE_ES32 \
 -D IMGUI_IMPL_OPENGL_ES3 \
+-D USE_BARYCENTRIC=$(USE_BARYCENTRIC) \
 -isystem$(LIBIGL-DIR)/external/eigen \
 -isystem$(LIBIGL-DIR)/external/glfw/include \
 -isystem$(LIBIGL-DIR)/external \
@@ -104,14 +106,14 @@ CPPFLAGS_UNUSED = \
 #CPPFLAGS += -g
 #CPPFLAGS += -D __EMSCRIPTEN__
 CPPFLAGS += -Wall -Wformat -g -O0 -D _GLFW_X11
-
+# -s WEBGL2_BACKWARDS_COMPATIBILITY_EMULATION=1
 ifeq ($(USE_EMSCRIPTEN), 1)
 CPPFLAGS += -I $(EMSDK)/upstream/emscripten/system/include $(EMS)
 LIBS += $(EMS)
 LDFLAGS += --shell-file shell_minimal.html -s LLD_REPORT_UNDEFINED -g
 else
-CPPFLAGS := -I /usr/include $(CPPFLAGS) -pthread
-LDFLAGS += -lSDL2 -lpthread -L$(LIBIGL-DIR)/build -ligl_opengl_glfw -ligl_opengl_glfw_imgui -lglfw -lGL -ldl `sdl2-config --libs` -g -s WEBGL2_BACKWARDS_COMPATIBILITY_EMULATION=1
+CPPFLAGS := -I /usr/include $(CPPFLAGS) -pthread -ggdb
+LDFLAGS += -lSDL2 -lpthread -L$(LIBIGL-DIR)/build -ligl_opengl_glfw -ligl_opengl_glfw_imgui -lglfw -lGL -ldl `sdl2-config --libs` -ggdb
 endif
 
 ##---------------------------------------------------------------------
