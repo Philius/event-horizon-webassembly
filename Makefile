@@ -13,8 +13,8 @@
 #
 # All three are needed to run the demo.
 
-USE_BARYCENTRIC = 0
-USE_EMSCRIPTEN = 1
+USE_BARYCENTRIC = 1
+USE_EMSCRIPTEN = 0
 ifeq ($(USE_EMSCRIPTEN), 1)
 CC = emcc
 CXX = em++
