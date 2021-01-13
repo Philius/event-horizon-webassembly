@@ -262,7 +262,11 @@ int main(int argc, char *argv[])
     }
     //console.log(aIndex[i],aIndex[i+1],aIndex[i+3],aIndex[i+2]);
   }
-  F.resize(0, 3);
+  for(Eigen::Index i = 0; i < F.rows(); ++i) {
+    F(i, 0) = i * 3 + 0;
+    F(i, 1) = i * 3 + 1;
+    F(i, 2) = i * 3 + 2;
+  }
   viewer.data().set_mesh(Vt, F);
 #else
   viewer.data().set_mesh(V, F);

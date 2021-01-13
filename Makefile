@@ -14,7 +14,7 @@
 # All three are needed to run the demo.
 
 USE_BARYCENTRIC = 1
-USE_EMSCRIPTEN = 0
+USE_EMSCRIPTEN  = 1
 ifeq ($(USE_EMSCRIPTEN), 1)
 CC = emcc
 CXX = em++
@@ -51,7 +51,8 @@ EMS += -s USE_SDL=2 -s WASM=1
 EMS += -s ALLOW_MEMORY_GROWTH=1
 EMS += -s DISABLE_EXCEPTION_CATCHING=2 -s NO_EXIT_RUNTIME=0
 EMS += -s ASSERTIONS=1
-EMS += -s USE_GLFW=3 -s USE_WEBGL2=1
+#EMS += -s USE_GLFW=3 -s USE_WEBGL2=1 -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=2
+EMS += -s USE_GLFW=3 -s USE_WEBGL2=1 -s USE_PTHREADS=0
 
 # Uncomment next line to fix possible rendering bugs with Emscripten version older then 1.39.0 (https://github.com/ocornut/imgui/issues/2877)
 #EMS += -s BINARYEN_TRAP_MODE=clamp
@@ -109,6 +110,7 @@ CPPFLAGS += -Wall -Wformat -g -O0 -D _GLFW_X11
 # -s WEBGL2_BACKWARDS_COMPATIBILITY_EMULATION=1
 ifeq ($(USE_EMSCRIPTEN), 1)
 CPPFLAGS += -I $(EMSDK)/upstream/emscripten/system/include $(EMS)
+CPPFLAGS += -D IGL_PARALLEL_FOR_FORCE_SERIAL=1
 LIBS += $(EMS)
 LDFLAGS += --shell-file shell_minimal.html -s LLD_REPORT_UNDEFINED -g
 else
